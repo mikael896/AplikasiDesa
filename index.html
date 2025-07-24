@@ -245,10 +245,10 @@
 
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        // GANTI VERSI KE 9.6.10 (Versi Stabil)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
         // --- FUNGSI DETEKTIF ---
         function showError(message) {
@@ -265,10 +265,17 @@
         // --- KONFIGURASI FIREBASE ---
         // Konfigurasi ini akan diisi secara otomatis jika variabel global ada
         // Jika tidak, kode akan gagal dengan pesan error yang jelas.
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmFplJjCa0Ry6JEUOqyzBgfXkTeafirebaseap",
+            authDomain: "pendudukapp-8d297.firebaseapp.com",
+            projectId: "pendudukapp-8d297",
+            storageBucket: "pendudukapp-8d297.appspot.com",
+            messagingSenderId: "521712480220",
+            appId: "1:521712480220:web:d7aa47c6117d488e02584e"
+        };
 
-        if (!firebaseConfig) {
-            showError("Konfigurasi Firebase tidak ditemukan. Aplikasi tidak dapat berjalan.");
+        if (!firebaseConfig.apiKey) {
+            showError("Konfigurasi Firebase tidak ditemukan atau tidak valid. Aplikasi tidak dapat berjalan.");
             return; // Hentikan eksekusi jika tidak ada konfigurasi
         }
 
@@ -278,7 +285,6 @@
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
-            setLogLevel('debug');
         } catch (e) {
             showError("Gagal menginisialisasi Firebase: " + e.message);
             return;
@@ -423,6 +429,7 @@
                     renderPendudukList(allData);
                     updateDashboard(allData);
                     updateRekap(allData);
+                    hideLoadingSpinner(); // Sembunyikan spinner SETELAH data dimuat
                 }, (error) => {
                     showError("Gagal mengambil data real-time: " + error.message);
                 });
@@ -514,7 +521,8 @@
         }
         
         async function deleteData(id, name) {
-            if (confirm(`Apakah Anda yakin ingin menghapus data ${name}?`)) {
+            // Menggunakan konfirmasi bawaan browser untuk kesederhanaan
+            if (window.confirm(`Apakah Anda yakin ingin menghapus data ${name}?`)) {
                 showLoadingSpinner();
                 try {
                     await deleteDoc(doc(db, "data_penduduk", id));
@@ -581,10 +589,14 @@
             onAuthStateChanged(auth, async (user) => {
                 try {
                     if (user) {
+                        // Pengguna sudah login (sebagai tamu), sekarang baru ambil data
+                        console.log("User signed in anonymously:", user.uid);
                         setupRealtimeListeners();
-                        hideLoadingSpinner();
                     } else {
+                        // Jika belum ada pengguna, coba login sebagai tamu
+                        console.log("No user found, signing in anonymously...");
                         await signInAnonymously(auth);
+                        // Listener onAuthStateChanged akan terpanggil lagi setelah ini
                     }
                 } catch(e) {
                      showError("Gagal pada proses otentikasi: " + e.message);
