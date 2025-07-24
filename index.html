@@ -265,14 +265,23 @@
         // --- KONFIGURASI FIREBASE ---
         // Konfigurasi ini akan diisi secara otomatis jika variabel global ada
         // Jika tidak, kode akan gagal dengan pesan error yang jelas.
-        const firebaseConfig = {
-            apiKey: "AIzaSyCmFplJjCa0Ry6JEUOqyzBgfXkTeafirebaseap",
-            authDomain: "pendudukapp-8d297.firebaseapp.com",
-            projectId: "pendudukapp-8d297",
-            storageBucket: "pendudukapp-8d297.appspot.com",
-            messagingSenderId: "521712480220",
-            appId: "1:521712480220:web:d7aa47c6117d488e02584e"
-        };
+        // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCmFplJjCa0Ry6JEUoqyzBGfxKTMp55z8s",
+  authDomain: "pendudukapp-8d297.firebaseapp.com",
+  projectId: "pendudukapp-8d297",
+  storageBucket: "pendudukapp-8d297.firebasestorage.app",
+  messagingSenderId: "521712480220",
+  appId: "1:521712480220:web:d7aa47c6117d483f926919"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
         if (!firebaseConfig.apiKey) {
             showError("Konfigurasi Firebase tidak ditemukan atau tidak valid. Aplikasi tidak dapat berjalan.");
