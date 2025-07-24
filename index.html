@@ -12,6 +12,8 @@
         .page.active { display: block; }
         .nav-item.active svg { color: #4F46E5; }
         .nav-item.active span { color: #4F46E5; }
+        .modal { display: none; }
+        .modal.active { display: flex; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -23,286 +25,157 @@
         <main class="flex-grow p-4 pb-20">
             <!-- Halaman Dasbor -->
             <div id="page-dasbor" class="page active">
-                <!-- Header -->
                 <header class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-lg shadow-lg mb-6">
                     <h1 class="text-2xl font-bold">Data Penduduk</h1>
                     <p class="text-indigo-200">Desa Buluhnaman</p>
                 </header>
-
-                <!-- Statistik Utama -->
                 <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div class="bg-gray-50 p-4 rounded-lg shadow text-center">
-                        <h3 class="text-sm font-medium text-gray-500">Total Penduduk</h3>
-                        <p id="total-penduduk" class="text-3xl font-bold text-indigo-600">0</p>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded-lg shadow text-center">
-                        <h3 class="text-sm font-medium text-gray-500">Total KK</h3>
-                        <p id="total-kk" class="text-3xl font-bold text-indigo-600">0</p>
-                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg shadow text-center"><h3 class="text-sm font-medium text-gray-500">Total Penduduk</h3><p id="total-penduduk" class="text-3xl font-bold text-indigo-600">0</p></div>
+                    <div class="bg-gray-50 p-4 rounded-lg shadow text-center"><h3 class="text-sm font-medium text-gray-500">Total KK</h3><p id="total-kk" class="text-3xl font-bold text-indigo-600">0</p></div>
                 </div>
-
-                <!-- Kartu Statistik Rinci -->
                 <div class="space-y-4">
-                    <div class="bg-white p-4 rounded-lg border">
-                        <h4 class="font-bold text-gray-700 mb-2">Jenis Kelamin</h4>
-                        <div class="flex justify-around text-center">
-                            <div>
-                                <p class="text-sm text-gray-500">Laki-laki</p>
-                                <p id="jumlah-laki" class="font-bold text-xl">0</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Perempuan</p>
-                                <p id="jumlah-perempuan" class="font-bold text-xl">0</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-4 rounded-lg border">
-                        <h4 class="font-bold text-gray-700 mb-3">Demografi Usia</h4>
-                        <ul class="space-y-2 text-sm">
-                            <li class="flex justify-between items-center"><span class="text-gray-600">Lansia (60+)</span><span id="jumlah-lansia" class="font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded">0</span></li>
-                            <li class="flex justify-between items-center"><span class="text-gray-600">Dewasa (19-59)</span><span id="jumlah-dewasa" class="font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded">0</span></li>
-                            <li class="flex justify-between items-center"><span class="text-gray-600">Remaja (13-18)</span><span id="jumlah-remaja" class="font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded">0</span></li>
-                            <li class="flex justify-between items-center"><span class="text-gray-600">Anak-anak (6-12)</span><span id="jumlah-anak" class="font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded">0</span></li>
-                            <li class="flex justify-between items-center"><span class="text-gray-600">Balita (0-5)</span><span id="jumlah-balita" class="font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded">0</span></li>
-                        </ul>
-                    </div>
-                     <div class="bg-white p-4 rounded-lg border">
-                        <h4 class="font-bold text-gray-700 mb-2">Kepala Keluarga</h4>
-                        <div class="flex justify-around text-center">
-                            <div>
-                                <p class="text-sm text-gray-500">KK Laki-laki</p>
-                                <p id="jumlah-kk-laki" class="font-bold text-xl">0</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">KK Perempuan</p>
-                                <p id="jumlah-kk-perempuan" class="font-bold text-xl">0</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-yellow-100 p-4 rounded-lg border border-yellow-300">
-                        <h4 class="font-bold text-yellow-800 mb-1">Lansia Tunggal</h4>
-                        <p class="text-sm text-yellow-700">Jumlah lansia yang tinggal sendiri.</p>
-                        <p id="jumlah-lansia-tunggal" class="text-2xl font-bold text-yellow-800 mt-2">0</p>
-                    </div>
+                    <div class="bg-white p-4 rounded-lg border"><h4 class="font-bold text-gray-700 mb-2">Jenis Kelamin</h4><div class="flex justify-around text-center"><div><p class="text-sm text-gray-500">Laki-laki</p><p id="jumlah-laki" class="font-bold text-xl">0</p></div><div><p class="text-sm text-gray-500">Perempuan</p><p id="jumlah-perempuan" class="font-bold text-xl">0</p></div></div></div>
+                    <div class="bg-white p-4 rounded-lg border"><h4 class="font-bold text-gray-700 mb-3">Demografi Usia</h4><ul class="space-y-2 text-sm"><li class="flex justify-between items-center"><span class="text-gray-600">Lansia (60+)</span><span id="jumlah-lansia" class="font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded">0</span></li><li class="flex justify-between items-center"><span class="text-gray-600">Dewasa (19-59)</span><span id="jumlah-dewasa" class="font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded">0</span></li><li class="flex justify-between items-center"><span class="text-gray-600">Remaja (13-18)</span><span id="jumlah-remaja" class="font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded">0</span></li><li class="flex justify-between items-center"><span class="text-gray-600">Anak-anak (6-12)</span><span id="jumlah-anak" class="font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded">0</span></li><li class="flex justify-between items-center"><span class="text-gray-600">Balita (0-5)</span><span id="jumlah-balita" class="font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded">0</span></li></ul></div>
+                    <div class="bg-white p-4 rounded-lg border"><h4 class="font-bold text-gray-700 mb-2">Kepala Keluarga</h4><div class="flex justify-around text-center"><div><p class="text-sm text-gray-500">KK Laki-laki</p><p id="jumlah-kk-laki" class="font-bold text-xl">0</p></div><div><p class="text-sm text-gray-500">KK Perempuan</p><p id="jumlah-kk-perempuan" class="font-bold text-xl">0</p></div></div></div>
+                    <div class="bg-yellow-100 p-4 rounded-lg border border-yellow-300"><h4 class="font-bold text-yellow-800 mb-1">Lansia Tunggal</h4><p class="text-sm text-yellow-700">Jumlah lansia yang tinggal sendiri.</p><p id="jumlah-lansia-tunggal" class="text-2xl font-bold text-yellow-800 mt-2">0</p></div>
                 </div>
             </div>
 
-            <!-- Halaman Daftar Penduduk -->
             <div id="page-penduduk" class="page">
                 <h2 class="text-xl font-bold text-gray-800 mb-4">Daftar Penduduk</h2>
-                <div class="relative mb-4">
-                    <input type="text" id="search-input" placeholder="Cari nama atau NIK..." class="w-full pl-10 pr-4 py-2 border rounded-lg">
-                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                </div>
-                <div id="penduduk-list" class="space-y-3">
-                    <!-- Data list dimuat di sini -->
-                </div>
+                <div class="relative mb-4"><input type="text" id="search-input" placeholder="Cari nama atau NIK..." class="w-full pl-10 pr-4 py-2 border rounded-lg"><svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></div>
+                <div id="penduduk-list" class="space-y-3"></div>
             </div>
             
-            <!-- Halaman Rekap Data -->
             <div id="page-rekap" class="page">
                 <h2 class="text-xl font-bold text-gray-800 mb-4">Rekapitulasi Data</h2>
-                <div class="space-y-4">
-                    <div class="bg-white p-4 rounded-lg border">
-                        <h4 class="font-bold text-gray-700 mb-3">Rekap Agama</h4>
-                        <ul id="rekap-agama" class="space-y-2 text-sm">
-                            <!-- Rekap agama dimuat di sini -->
-                        </ul>
-                    </div>
-                     <div class="bg-white p-4 rounded-lg border">
-                        <h4 class="font-bold text-gray-700 mb-3">Rekap Pekerjaan</h4>
-                        <ul id="rekap-pekerjaan" class="space-y-2 text-sm">
-                             <!-- Rekap pekerjaan dimuat di sini -->
-                        </ul>
-                    </div>
-                </div>
+                <div class="space-y-4"><div class="bg-white p-4 rounded-lg border"><h4 class="font-bold text-gray-700 mb-3">Rekap Agama</h4><ul id="rekap-agama" class="space-y-2 text-sm"></ul></div><div class="bg-white p-4 rounded-lg border"><h4 class="font-bold text-gray-700 mb-3">Rekap Pekerjaan</h4><ul id="rekap-pekerjaan" class="space-y-2 text-sm"></ul></div></div>
             </div>
 
-            <!-- Halaman Tambah/Edit Data -->
             <div id="page-form" class="page">
-                <h2 id="form-title" class="text-xl font-bold text-gray-800 mb-4">Tambah Data Baru</h2>
-                 <button id="scan-button" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2 mb-2 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.88.99 6.6 2.6l-2.6 2.4H21V3l-1.9 1.9A9 9 0 0 0 3.51 9"></path></svg>
-                    <span id="scan-button-text">Scan KTP</span>
-                </button>
+                <h2 id="form-title" class="text-xl font-bold text-gray-800 mb-4">Tambah Data</h2>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <button id="scan-ktp-button" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clip-rule="evenodd" /><path d="M9 9a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z" /><path d="M8 12a1 1 0 011-1h4a1 1 0 110 2H9a1 1 0 01-1-1z" /></svg><span id="scan-ktp-button-text">Scan KTP</span></button>
+                    <button id="scan-kk-button" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 flex items-center justify-center gap-2 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zm-1.518 8.168A4.002 4.002 0 012 13V9a1 1 0 112 0v4a2 2 0 001.832 1.993c.125.005.25.007.376.007.255 0 .506-.01.753-.031a3.998 3.998 0 013.038 3.038C10.01 18.494 10 18.745 10 19c0 .126.002.25.007.376A2 2 0 0012 21h4a1 1 0 110-2h-4a3.998 3.998 0 01-1.993-1.832zM15 3a3 3 0 11-6 0 3 3 0 016 0z" /></svg><span id="scan-kk-button-text">Scan KK</span></button>
+                </div>
                 <input type="file" id="image-input" class="hidden" accept="image/*">
-                
                 <p class="text-center text-gray-500 text-sm mb-4">atau isi manual di bawah</p>
-                
-                <form id="data-form" class="space-y-4">
-                    <input type="hidden" id="edit-id">
-                    <div>
-                        <label for="nik" class="block text-sm font-medium text-gray-700">NIK</label>
-                        <input type="number" id="nik" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                    </div>
-                    <div>
-                        <label for="nama" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                        <input type="text" id="nama" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                    </div>
-                     <div>
-                        <label for="no_kk" class="block text-sm font-medium text-gray-700">No. KK</label>
-                        <input type="number" id="no_kk" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                    </div>
-                    <div>
-                        <label for="tgl_lahir" class="block text-sm font-medium text-gray-700">Tanggal Lahir</label>
-                        <input type="date" id="tgl_lahir" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                    </div>
-                    <div>
-                        <label for="jenis_kelamin" class="block text-sm font-medium text-gray-700">Jenis Kelamin</label>
-                        <select id="jenis_kelamin" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                            <option>Laki-laki</option>
-                            <option>Perempuan</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="agama" class="block text-sm font-medium text-gray-700">Agama</label>
-                        <input type="text" id="agama" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                    </div>
-                    <div>
-                        <label for="pekerjaan" class="block text-sm font-medium text-gray-700">Pekerjaan</label>
-                        <input type="text" id="pekerjaan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                    </div>
-                    <div>
-                        <label for="status_perkawinan" class="block text-sm font-medium text-gray-700">Status Perkawinan</label>
-                         <select id="status_perkawinan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                            <option>Belum Kawin</option>
-                            <option>Kawin</option>
-                            <option>Cerai Hidup</option>
-                            <option>Cerai Mati</option>
-                        </select>
-                    </div>
-                     <div>
-                        <label for="status_dalam_keluarga" class="block text-sm font-medium text-gray-700">Status dalam Keluarga</label>
-                        <select id="status_dalam_keluarga" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
-                            <option>Kepala Keluarga</option>
-                            <option>Istri</option>
-                            <option>Anak</option>
-                            <option>Lainnya</option>
-                        </select>
-                    </div>
-                    <div class="flex gap-4 pt-4">
-                        <button type="button" id="cancel-button" class="w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50">Batal</button>
-                        <button type="submit" class="w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700">Simpan</button>
-                    </div>
-                </form>
+                <form id="data-form" class="space-y-4"></form>
             </div>
 
-            <!-- Halaman Detail Penduduk -->
-            <div id="page-detail" class="page">
-                 <!-- Konten detail dimuat di sini -->
-            </div>
-            
+            <div id="page-detail" class="page"></div>
         </main>
 
-        <!-- Navigasi Bawah -->
-        <nav class="w-full max-w-sm fixed bottom-0 bg-white border-t border-gray-200 flex justify-around">
-            <button data-page="dasbor" class="nav-item active flex-1 flex flex-col items-center justify-center p-2 text-gray-500">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                <span class="text-xs">Dasbor</span>
-            </button>
-            <button data-page="penduduk" class="nav-item flex-1 flex flex-col items-center justify-center p-2 text-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                <span class="text-xs">Penduduk</span>
-            </button>
-             <button id="add-button-nav" class="flex-1 flex flex-col items-center justify-center p-2 text-gray-500 -mt-5">
-                <div class="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-lg border-4 border-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                </div>
-            </button>
-            <button data-page="rekap" class="nav-item flex-1 flex flex-col items-center justify-center p-2 text-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
-                <span class="text-xs">Rekap</span>
-            </button>
-            <button data-page="profil" class="nav-item flex-1 flex flex-col items-center justify-center p-2 text-gray-500">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mb-1"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                <span class="text-xs">Profil</span>
-            </button>
-        </nav>
+        <nav class="w-full max-w-sm fixed bottom-0 bg-white border-t border-gray-200 flex justify-around"></nav>
     </div>
 
-    <!-- Loading Spinner -->
-    <div id="loading-spinner" class="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
-        <div class="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    <div id="kk-confirm-modal" class="modal fixed inset-0 bg-black bg-opacity-60 items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Konfirmasi Data KK</h3>
+            <p class="text-sm text-gray-600 mb-4">Kami menemukan data berikut. Harap periksa sebelum menyimpan.</p>
+            <div id="kk-confirm-list" class="max-h-60 overflow-y-auto space-y-2 border-t border-b py-2"></div>
+            <div class="flex gap-4 mt-6">
+                <button id="kk-cancel-button" class="w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50">Batal</button>
+                <button id="kk-save-button" class="w-full justify-center rounded-md border border-transparent bg-teal-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-teal-700">Simpan Semua</button>
+            </div>
+        </div>
     </div>
     
-    <!-- Kotak Pesan Error -->
-    <div id="error-container" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[100] p-4">
+    <div id="loading-spinner" class="fixed inset-0 bg-white bg-opacity-80 flex-col items-center justify-center z-[100]" style="display: flex;">
+        <div class="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <p id="loading-text" class="mt-4 text-gray-600">Memuat data...</p>
+    </div>
+    
+    <div id="error-container" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center z-[101] p-4">
         <div class="bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full">
-            <div class="flex items-center mb-4">
-                 <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-4">
-                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                </div>
-                <h3 class="text-lg font-bold text-gray-800">Terjadi Kesalahan</h3>
-            </div>
-            <div class="bg-red-50 text-red-700 p-3 rounded-md">
-                 <p class="text-sm" id="error-message">Pesan error akan muncul di sini.</p>
-            </div>
-             <button onclick="document.getElementById('error-container').classList.add('hidden')" class="w-full mt-4 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors">
-                Tutup
-            </button>
+            <div class="flex items-center mb-4"><div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-4"><svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div><h3 class="text-lg font-bold text-gray-800">Terjadi Kesalahan</h3></div>
+            <div class="bg-red-50 text-red-700 p-3 rounded-md text-sm break-words" id="error-message">Pesan error akan muncul di sini.</div>
+            <button onclick="document.getElementById('error-container').classList.remove('active')" class="w-full mt-4 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors">Tutup</button>
         </div>
     </div>
 
-
     <script type="module">
-        // Menggunakan versi 9.6.10 yang terbukti stabil
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
-        // --- Fungsi Error ---
-        function showError(message) {
-            const errorContainer = document.getElementById('error-container');
-            const errorMessage = document.getElementById('error-message');
-            if (errorContainer && errorMessage) {
-                errorMessage.textContent = message;
-                errorContainer.classList.remove('hidden');
-            }
-            hideLoadingSpinner();
-            console.error(message);
-        }
-        
-        // --- KONFIGURASI FIREBASE (Gunakan yang dari console Anda) ---
+        // --- KONFIGURASI FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyCmFplJjCa0Ry6JEUoqyzBGfxKTMp55z8s",
             authDomain: "pendudukapp-8d297.firebaseapp.com",
             projectId: "pendudukapp-8d297",
             storageBucket: "pendudukapp-8d297.appspot.com",
             messagingSenderId: "521712480220",
-            appId: "1:521712480220:web:d7aa47c6117d483f926919"
+            appId: "1:521712480220:web:d7aa47c6117d488e02584e"
         };
         
-        // --- INISIALISASI ---
         let app, db, auth;
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-        } catch (e) {
-            showError("Gagal menginisialisasi Firebase: " + e.message);
-        }
-
-        const dataPendudukCol = collection(db, "data_penduduk");
         let allData = [];
         let unsubscribe = null; 
+        let currentScanType = 'KTP'; 
 
-        // --- Fungsi Utama ---
-        const pages = document.querySelectorAll('.page');
-        const navItems = document.querySelectorAll('.nav-item');
-        const loadingSpinner = document.getElementById('loading-spinner');
+        // --- RENDER HTML DINAMIS ---
+        function renderNav() {
+            const navContainer = document.querySelector('nav');
+            navContainer.innerHTML = `
+                <button data-page="dasbor" class="nav-item active flex-1 flex flex-col items-center justify-center p-2 text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg><span class="text-xs">Dasbor</span></button>
+                <button data-page="penduduk" class="nav-item flex-1 flex flex-col items-center justify-center p-2 text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.125-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.125-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg><span class="text-xs">Penduduk</span></button>
+                <button id="add-button-nav" class="flex-1 flex flex-col items-center justify-center p-2 text-gray-500 -mt-5"><div class="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-lg border-4 border-white"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg></div></button>
+                <button data-page="rekap" class="nav-item flex-1 flex flex-col items-center justify-center p-2 text-gray-500"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg><span class="text-xs">Rekap</span></button>
+                <button data-page="profil" disabled class="nav-item flex-1 flex flex-col items-center justify-center p-2 text-gray-400 cursor-not-allowed"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg><span class="text-xs">Profil</span></button>
+            `;
+        }
+
+        function renderForm() {
+            const formContainer = document.getElementById('data-form');
+            formContainer.innerHTML = `
+                <input type="hidden" id="edit-id">
+                <div><label for="nik" class="block text-sm font-medium text-gray-700">NIK</label><input type="number" id="nik" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></div>
+                <div><label for="nama" class="block text-sm font-medium text-gray-700">Nama Lengkap</label><input type="text" id="nama" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></div>
+                <div><label for="no_kk" class="block text-sm font-medium text-gray-700">No. KK</label><input type="number" id="no_kk" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></div>
+                <div><label for="tgl_lahir" class="block text-sm font-medium text-gray-700">Tanggal Lahir</label><input type="date" id="tgl_lahir" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></div>
+                <div><label for="jenis_kelamin" class="block text-sm font-medium text-gray-700">Jenis Kelamin</label><select id="jenis_kelamin" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required><option>Laki-laki</option><option>Perempuan</option></select></div>
+                <div><label for="agama" class="block text-sm font-medium text-gray-700">Agama</label><input type="text" id="agama" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></div>
+                <div><label for="pekerjaan" class="block text-sm font-medium text-gray-700">Pekerjaan</label><input type="text" id="pekerjaan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></div>
+                <div><label for="status_perkawinan" class="block text-sm font-medium text-gray-700">Status Perkawinan</label><select id="status_perkawinan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required><option>Belum Kawin</option><option>Kawin</option><option>Cerai Hidup</option><option>Cerai Mati</option></select></div>
+                <div><label for="status_dalam_keluarga" class="block text-sm font-medium text-gray-700">Status dalam Keluarga</label><select id="status_dalam_keluarga" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required><option>Kepala Keluarga</option><option>Istri</option><option>Anak</option><option>Lainnya</option></select></div>
+                <div class="flex gap-4 pt-4"><button type="button" id="cancel-button" class="w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50">Batal</button><button type="submit" class="w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700">Simpan</button></div>
+            `;
+        }
         
-        function showLoadingSpinner() { if(loadingSpinner) loadingSpinner.style.display = 'flex'; }
-        function hideLoadingSpinner() { if(loadingSpinner) loadingSpinner.style.display = 'none'; }
+        function showError(message) {
+            const errorContainer = document.getElementById('error-container');
+            const errorMessage = document.getElementById('error-message');
+            if (errorContainer && errorMessage) {
+                errorMessage.textContent = message;
+                errorContainer.classList.add('active');
+            }
+            hideLoadingSpinner();
+            console.error(message);
+        }
+
+        function showLoadingSpinner(text = 'Memuat...') {
+            const spinner = document.getElementById('loading-spinner');
+            const loadingText = document.getElementById('loading-text');
+            if(spinner) {
+                loadingText.textContent = text;
+                spinner.style.display = 'flex';
+            }
+        }
+        function hideLoadingSpinner() {
+            const spinner = document.getElementById('loading-spinner');
+            if(spinner) spinner.style.display = 'none';
+        }
 
         function navigateTo(pageId) {
-            pages.forEach(page => page.classList.toggle('active', page.id === `page-${pageId}`));
-            navItems.forEach(item => {
-                const isActive = item.getAttribute('data-page') === pageId;
-                item.classList.toggle('active', isActive);
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(`page-${pageId}`).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.page === pageId);
             });
             window.scrollTo(0, 0);
         }
-
+        
         function getAge(dateString) {
             if (!dateString) return 0;
             const birthDate = new Date(dateString);
@@ -323,30 +196,6 @@
             return 'Lansia';
         }
 
-        function renderPendudukList(data) {
-            const listContainer = document.getElementById('penduduk-list');
-            if (!listContainer) return;
-            listContainer.innerHTML = data.length === 0 ? '<p class="text-gray-500 text-center">Belum ada data penduduk.</p>' :
-                data.map(p => {
-                    const age = getAge(p.tgl_lahir);
-                    const initial = p.nama ? p.nama.charAt(0).toUpperCase() : '?';
-                    return `
-                        <div class="flex items-center bg-white p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors" data-id="${p.id}">
-                            <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold mr-4">${initial}</div>
-                            <div class="flex-grow">
-                                <p class="font-semibold text-gray-800">${p.nama || 'Tanpa Nama'}</p>
-                                <p class="text-sm text-gray-500">${p.nik || 'Tanpa NIK'} - ${age} tahun</p>
-                            </div>
-                            <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-                        </div>
-                    `;
-                }).join('');
-            
-            listContainer.querySelectorAll('.cursor-pointer').forEach(item => {
-                item.addEventListener('click', () => showDetail(item.dataset.id));
-            });
-        }
-        
         function updateDashboard(data) {
             document.getElementById('total-penduduk').textContent = data.length;
             const noKkSet = new Set(data.map(p => p.no_kk).filter(Boolean));
@@ -356,7 +205,7 @@
                 if (p.jenis_kelamin === 'Laki-laki') acc.laki++; else acc.perempuan++;
                 const age = getAge(p.tgl_lahir);
                 const category = getAgeCategory(age).toLowerCase().replace('-', '');
-                acc[category]++;
+                if(acc[category] !== undefined) acc[category]++;
                 if (p.status_dalam_keluarga === 'Kepala Keluarga') {
                    if (p.jenis_kelamin === 'Laki-laki') acc.kkLaki.add(p.no_kk); else acc.kkPerempuan.add(p.no_kk);
                 }
@@ -399,11 +248,36 @@
                 <li class="flex justify-between items-center"><span class="text-gray-600">${pekerjaan}</span><span class="font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded">${jumlah}</span></li>
             `).join('') || '<p class="text-gray-500 text-center">Data kosong.</p>';
         }
+
+        function renderPendudukList(data) {
+            const listContainer = document.getElementById('penduduk-list');
+            if (!listContainer) return;
+            const sortedData = [...data].sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
+            listContainer.innerHTML = sortedData.length === 0 ? '<p class="text-gray-500 text-center">Belum ada data penduduk.</p>' :
+                sortedData.map(p => {
+                    const age = getAge(p.tgl_lahir);
+                    const initial = p.nama ? p.nama.charAt(0).toUpperCase() : '?';
+                    return `
+                        <div class="flex items-center bg-white p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors" data-id="${p.id}">
+                            <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold mr-4">${initial}</div>
+                            <div class="flex-grow">
+                                <p class="font-semibold text-gray-800">${p.nama || 'Tanpa Nama'}</p>
+                                <p class="text-sm text-gray-500">${p.nik || 'Tanpa NIK'} - ${age} tahun</p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        </div>
+                    `;
+                }).join('');
+            
+            listContainer.querySelectorAll('.cursor-pointer').forEach(item => {
+                item.addEventListener('click', () => showDetail(item.dataset.id));
+            });
+        }
         
         function setupRealtimeListeners() {
             if (unsubscribe) unsubscribe(); 
             try {
-                 unsubscribe = onSnapshot(dataPendudukCol, (snapshot) => {
+                 unsubscribe = onSnapshot(collection(db, "data_penduduk"), (snapshot) => {
                     allData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     renderPendudukList(allData);
                     updateDashboard(allData);
@@ -449,22 +323,21 @@
         }
         
         function showForm(dataToEdit = null) {
+            navigateTo('form');
             const form = document.getElementById('data-form');
             form.reset();
             document.getElementById('edit-id').value = dataToEdit ? dataToEdit.id : '';
-            document.getElementById('form-title').textContent = dataToEdit ? 'Ubah Data Penduduk' : 'Tambah Data Baru';
             if (dataToEdit) {
                 Object.keys(dataToEdit).forEach(key => {
                     const el = document.getElementById(key);
                     if (el) el.value = dataToEdit[key];
                 });
             }
-            navigateTo('form');
         }
 
         async function saveData(e) {
             e.preventDefault();
-            showLoadingSpinner();
+            showLoadingSpinner('Menyimpan data...');
             const id = document.getElementById('edit-id').value;
             const data = {
                 nik: document.getElementById('nik').value,
@@ -481,7 +354,7 @@
                 if (id) {
                     await setDoc(doc(db, "data_penduduk", id), data);
                 } else {
-                    await addDoc(dataPendudukCol, data);
+                    await addDoc(collection(db, "data_penduduk"), data);
                 }
                 navigateTo('penduduk');
             } catch (error) {
@@ -493,7 +366,7 @@
         
         async function deleteData(id, name) {
             if (window.confirm(`Apakah Anda yakin ingin menghapus data ${name}?`)) {
-                showLoadingSpinner();
+                showLoadingSpinner('Menghapus data...');
                 try {
                     await deleteDoc(doc(db, "data_penduduk", id));
                     navigateTo('penduduk');
@@ -505,91 +378,156 @@
             }
         }
         
-        function filterData(query) {
-            const filtered = allData.filter(p => 
-                (p.nama || '').toLowerCase().includes(query) || 
-                (p.nik || '').includes(query)
-            );
-            renderPendudukList(filtered);
-        }
-
-        async function scanKTP(imageData) {
-            const scanButton = document.getElementById('scan-button');
-            const scanButtonText = document.getElementById('scan-button-text');
-            scanButtonText.textContent = 'Memindai...';
-            scanButton.disabled = true;
+        async function scanImage(imageData, type) {
+            const endpoint = type === 'KTP' ? '/.netlify/functions/scan-ktp' : '/.netlify/functions/scan-kk';
+            const button = document.getElementById(type === 'KTP' ? 'scan-ktp-button' : 'scan-kk-button');
+            const buttonText = document.getElementById(type === 'KTP' ? 'scan-ktp-button-text' : 'scan-kk-button-text');
+            
+            buttonText.textContent = 'Memindai...';
+            button.disabled = true;
+            showLoadingSpinner('Memproses gambar...');
 
             try {
-                const response = await fetch('/.netlify/functions/scan-ktp', {
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ imageData: imageData })
                 });
 
-                const result = await response.json();
-
+                const resultText = await response.text();
                 if (!response.ok) {
-                    // Jika backend mengembalikan pesan error, tampilkan
-                    throw new Error(result.error || `Server merespon dengan status ${response.status}`);
+                    let errorMsg = `Server merespon dengan status ${response.status}.`;
+                    try {
+                        const errJson = JSON.parse(resultText);
+                        errorMsg = errJson.error || errorMsg;
+                    } catch (e) {}
+                    throw new Error(errorMsg);
                 }
                 
-                const dataText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (dataText) {
-                    const data = JSON.parse(dataText);
-                    document.getElementById('nik').value = data.nik || '';
-                    document.getElementById('nama').value = data.nama || '';
-                    document.getElementById('tgl_lahir').value = data.tglLahir || '';
-                    document.getElementById('jenis_kelamin').value = data.jenisKelamin || 'Laki-laki';
-                    document.getElementById('agama').value = data.agama || '';
-                    document.getElementById('pekerjaan').value = data.pekerjaan || '';
+                const result = JSON.parse(resultText);
+                const data = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!data) throw new Error('AI tidak mengembalikan data yang valid.');
+                
+                const parsedData = JSON.parse(data);
+
+                if (type === 'KTP') {
+                    showForm(); 
+                    fillKtpForm(parsedData);
                 } else {
-                    throw new Error('Gagal mengekstrak data dari respons AI.');
+                    showKkConfirmModal(parsedData);
                 }
+
             } catch (error) {
                 showError(`Gagal memindai: ${error.message}`);
             } finally {
-                scanButtonText.textContent = 'Scan Ulang KTP';
-                scanButton.disabled = false;
+                buttonText.textContent = type === 'KTP' ? 'Scan KTP' : 'Scan KK';
+                button.disabled = false;
+                hideLoadingSpinner();
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!auth) {
-                showError("Objek Firebase Auth tidak terinisialisasi.");
+        function fillKtpForm(data) {
+            document.getElementById('nik').value = data.nik || '';
+            document.getElementById('nama').value = data.nama || '';
+            document.getElementById('tgl_lahir').value = data.tglLahir || '';
+            document.getElementById('jenis_kelamin').value = data.jenisKelamin || 'Laki-laki';
+            document.getElementById('agama').value = data.agama || '';
+            document.getElementById('pekerjaan').value = data.pekerjaan || '';
+        }
+
+        function showKkConfirmModal(familyData) {
+            const modal = document.getElementById('kk-confirm-modal');
+            const list = document.getElementById('kk-confirm-list');
+            
+            if (!familyData || !Array.isArray(familyData) || familyData.length === 0) {
+                showError('Tidak ada data anggota keluarga yang valid ditemukan di KK.');
                 return;
             }
-            onAuthStateChanged(auth, async (user) => {
-                try {
-                    if (user) {
-                        console.log("User signed in anonymously:", user.uid);
-                        setupRealtimeListeners();
-                    } else {
-                        console.log("No user found, signing in anonymously...");
-                        await signInAnonymously(auth);
-                    }
-                } catch(e) {
-                     showError("Gagal pada proses otentikasi: " + e.message);
-                }
-            });
 
-            navItems.forEach(item => {
-                item.addEventListener('click', () => navigateTo(item.getAttribute('data-page')));
+            list.innerHTML = familyData.map(p => `
+                <div class="p-2 border rounded-md bg-gray-50">
+                    <p class="font-semibold text-sm">${p.nama || 'Tanpa Nama'}</p>
+                    <p class="text-xs text-gray-500">${p.nik || 'Tanpa NIK'}</p>
+                </div>
+            `).join('');
+            
+            modal.classList.add('active');
+
+            document.getElementById('kk-cancel-button').onclick = () => modal.classList.remove('active');
+            document.getElementById('kk-save-button').onclick = async () => {
+                modal.classList.remove('active');
+                showLoadingSpinner('Menyimpan data KK...');
+                try {
+                    const batch = writeBatch(db);
+                    familyData.forEach(member => {
+                        const newDocRef = doc(collection(db, "data_penduduk"));
+                        const completeMemberData = {
+                            nik: member.nik || '',
+                            nama: member.nama || '',
+                            no_kk: member.no_kk || '',
+                            tgl_lahir: member.tglLahir || '',
+                            jenis_kelamin: member.jenisKelamin || 'Laki-laki',
+                            agama: member.agama || '',
+                            pekerjaan: member.pekerjaan || '',
+                            status_perkawinan: member.status_perkawinan || 'Belum Kawin',
+                            status_dalam_keluarga: member.status_dalam_keluarga || 'Anak'
+                        };
+                        batch.set(newDocRef, completeMemberData);
+                    });
+                    await batch.commit();
+                    navigateTo('penduduk');
+                } catch (err) {
+                    showError('Gagal menyimpan data KK: ' + err.message);
+                } finally {
+                    hideLoadingSpinner();
+                }
+            };
+        }
+
+        // --- INISIALISASI APLIKASI ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderNav();
+            renderForm();
+            
+            // Atur Event Listeners
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => navigateTo(item.dataset.page));
             });
             document.getElementById('add-button-nav').addEventListener('click', () => showForm());
-            document.getElementById('cancel-button').addEventListener('click', () => navigateTo('penduduk'));
-            document.getElementById('data-form').addEventListener('submit', saveData);
-            document.getElementById('search-input').addEventListener('input', (e) => filterData(e.target.value.toLowerCase()));
-            document.getElementById('scan-button').addEventListener('click', () => document.getElementById('image-input').click());
+            document.getElementById('search-input').addEventListener('input', (e) => renderPendudukList(allData.filter(p => (p.nama||'').toLowerCase().includes(e.target.value.toLowerCase()) || (p.nik||'').includes(e.target.value))));
+            
+            document.getElementById('scan-ktp-button').addEventListener('click', () => {
+                currentScanType = 'KTP';
+                document.getElementById('image-input').click();
+            });
+            document.getElementById('scan-kk-button').addEventListener('click', () => {
+                currentScanType = 'KK';
+                document.getElementById('image-input').click();
+            });
             document.getElementById('image-input').addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     const base64String = reader.result.replace('data:', '').replace(/^.+,/, '');
-                    scanKTP(base64String);
+                    scanImage(base64String, currentScanType);
                 };
                 reader.readAsDataURL(file);
                 event.target.value = '';
+            });
+
+            // Mulai proses otentikasi
+            onAuthStateChanged(auth, async (user) => {
+                try {
+                    if (user) {
+                        setupRealtimeListeners();
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch(e) {
+                     showError("Gagal otentikasi: " + e.message);
+                }
             });
         });
     </script>
