@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Penduduk Desa Buluhnaman</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- KONFIGURASI FIREBASE ---
+        // Konfigurasi ini akan diisi secara otomatis di lingkungan Canvas
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "YOUR_API_KEY", // Ganti jika diperlukan
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // Inisialisasi Firebase
+        let app, db, auth;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            setLogLevel('debug');
+            console.log("Firebase berhasil diinisialisasi.");
+        } catch (e) {
+            console.error("Gagal menginisialisasi Firebase:", e);
+            showToast("Gagal terhubung ke server. Coba muat ulang.", true);
+        }
+
+        // --- STATE APLIKASI ---
+        let allResidents = [];
+        let currentUserId = null;
+        let unsubscribe = null; // Untuk listener onSnapshot
+
+        // --- ELEMEN UI ---
+        const pages = {
+            dashboard: document.getElementById('page-dashboard'),
+            residents: document.getElementById('page-residents'),
+            recap: document.getElementById('page-recap'),
+            add: document.getElementById('page-add'),
+            detail: document.getElementById('page-detail')
+        };
+        const navButtons = {
+            dashboard: document.getElementById('nav-dashboard'),
+            residents: document.getElementById('nav-residents'),
+            recap: document.getElementById('nav-recap'),
+            add: document.getElementById('nav-add')
+        };
+        const addForm = document.getElementById('add-resident-form');
+        const searchInput = document.getElementById('search-input');
+        const scanButton = document.getElementById('scan-button');
+
+        // --- FUNGSI NAVIGASI ---
+        function showPage(pageName) {
+            Object.values(pages).forEach(p => p.classList.add('hidden'));
+            if (pages[pageName]) pages[pageName].classList.remove('hidden');
+
+            Object.values(navButtons).forEach(b => {
+                b.classList.remove('text-indigo-600');
+                b.classList.add('text-gray-500');
+                b.querySelector('.nav-indicator').classList.add('hidden');
+            });
+
+            const navKey = pageName === 'add' ? 'add' : pageName;
+             if (navButtons[navKey]) {
+                navButtons[navKey].classList.add('text-indigo-600');
+                navButtons[navKey].classList.remove('text-gray-500');
+                 if(navButtons[navKey].querySelector('.nav-indicator')) {
+                    navButtons[navKey].querySelector('.nav-indicator').classList.remove('hidden');
+                 }
+            }
+        }
+        
+        window.navigateTo = function(pageName) {
+            if (pageName === 'add') {
+                document.getElementById('form-title').textContent = 'Tambah Data Baru';
+                addForm.reset();
+                addForm.dataset.mode = 'add';
+                delete addForm.dataset.docId;
+            }
+            showPage(pageName);
+        }
+
+        // --- FUNGSI UTILITAS ---
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            toastMessage.textContent = message;
+            toast.className = `fixed bottom-20 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        function calculateAgeAndGroup(birthDate) {
+            if (!birthDate) return { age: 0, group: 'Tidak Diketahui' };
+            const today = new Date();
+            const birth = new Date(birthDate);
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+
+            let group = 'Dewasa';
+            if (age <= 5) group = 'Balita';
+            else if (age <= 12) group = 'Anak-anak';
+            else if (age <= 18) group = 'Remaja';
+            else if (age >= 60) group = 'Lansia';
+            
+            return { age, group };
+        }
+        
+        // --- FUNGSI RENDER DATA ---
+        function renderDashboard() {
+            const totalPenduduk = allResidents.length;
+            const laki = allResidents.filter(p => p.jenisKelamin === 'Laki-laki').length;
+            const perempuan = totalPenduduk - laki;
+            
+            const kk = allResidents.filter(p => p.statusKeluarga === 'Kepala Keluarga');
+            const kkLaki = kk.filter(p => p.jenisKelamin === 'Laki-laki').length;
+            const kkPerempuan = kk.length - kkLaki;
+            
+            const { lansia, remaja, balita, anak, dewasa } = allResidents.reduce((acc, p) => {
+                const { group } = calculateAgeAndGroup(p.tglLahir);
+                if (group === 'Lansia') acc.lansia++;
+                if (group === 'Remaja') acc.remaja++;
+                if (group === 'Balita') acc.balita++;
+                if (group === 'Anak-anak') acc.anak++;
+                if (group === 'Dewasa') acc.dewasa++;
+                return acc;
+            }, { lansia: 0, remaja: 0, balita: 0, anak: 0, dewasa: 0 });
+
+            const lansiaTunggal = allResidents.filter(p => {
+                const { group } = calculateAgeAndGroup(p.tglLahir);
+                return group === 'Lansia' && p.statusPerkawinan !== 'Kawin';
+            }).length;
+
+            document.getElementById('total-penduduk').textContent = totalPenduduk;
+            document.getElementById('total-kk').textContent = kk.length;
+            document.getElementById('stat-laki').textContent = laki;
+            document.getElementById('stat-perempuan').textContent = perempuan;
+            document.getElementById('stat-kk-laki').textContent = kkLaki;
+            document.getElementById('stat-kk-perempuan').textContent = kkPerempuan;
+            document.getElementById('stat-lansia').textContent = lansia;
+            document.getElementById('stat-dewasa').textContent = dewasa;
+            document.getElementById('stat-remaja').textContent = remaja;
+            document.getElementById('stat-anak').textContent = anak;
+            document.getElementById('stat-balita').textContent = balita;
+            document.getElementById('stat-lansia-tunggal').textContent = lansiaTunggal;
+        }
+
+        function renderResidentsList(residentsToRender) {
+            const listContainer = document.getElementById('residents-list');
+            if (residentsToRender.length === 0) {
+                listContainer.innerHTML = `<div class="text-center text-gray-500 py-10">Tidak ada data ditemukan.</div>`;
+                return;
+            }
+            listContainer.innerHTML = residentsToRender.map(resident => {
+                 const initial = resident.nama ? resident.nama.charAt(0).toUpperCase() : '?';
+                 const { age, group } = calculateAgeAndGroup(resident.tglLahir);
+                 return `
+                    <div class="bg-white p-4 rounded-xl shadow-sm flex items-center space-x-4" onclick="showResidentDetail('${resident.id}')">
+                        <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xl">${initial}</div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-800">${resident.nama || 'Tanpa Nama'}</p>
+                            <p class="text-sm text-gray-500">${resident.nik || 'NIK tidak ada'}</p>
+                        </div>
+                        <div class="text-right">
+                             <p class="text-sm font-medium text-gray-700">${age} thn</p>
+                             <span class="text-xs font-medium px-2 py-0.5 rounded-full ${group === 'Lansia' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">${group}</span>
+                        </div>
+                    </div>
+                 `;
+            }).join('');
+        }
+
+        function renderRecap() {
+            const agamaRecap = allResidents.reduce((acc, p) => {
+                const agama = p.agama || 'Tidak Diketahui';
+                acc[agama] = (acc[agama] || 0) + 1;
+                return acc;
+            }, {});
+
+            const pekerjaanRecap = allResidents.reduce((acc, p) => {
+                const pekerjaan = p.pekerjaan || 'Tidak Diketahui';
+                acc[pekerjaan] = (acc[pekerjaan] || 0) + 1;
+                return acc;
+            }, {});
+            
+            const agamaContainer = document.getElementById('recap-agama');
+            agamaContainer.innerHTML = Object.entries(agamaRecap).map(([key, value]) => `
+                <div class="flex justify-between items-center bg-white p-3 rounded-lg">
+                    <span class="text-gray-600">${key}</span>
+                    <span class="font-bold text-indigo-600">${value}</span>
+                </div>
+            `).join('');
+
+            const pekerjaanContainer = document.getElementById('recap-pekerjaan');
+            pekerjaanContainer.innerHTML = Object.entries(pekerjaanRecap).map(([key, value]) => `
+                <div class="flex justify-between items-center bg-white p-3 rounded-lg">
+                    <span class="text-gray-600">${key}</span>
+                    <span class="font-bold text-indigo-600">${value}</span>
+                </div>
+            `).join('');
+        }
+
+        window.showResidentDetail = function(id) {
+            const resident = allResidents.find(p => p.id === id);
+            if (!resident) return;
+
+            document.getElementById('detail-nama').textContent = resident.nama;
+            document.getElementById('detail-nik').textContent = `NIK: ${resident.nik}`;
+            const { age, group } = calculateAgeAndGroup(resident.tglLahir);
+
+            const detailFields = {
+                'Jenis Kelamin': resident.jenisKelamin,
+                'Tanggal Lahir': new Date(resident.tglLahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }),
+                'Usia': `${age} tahun (${group})`,
+                'Agama': resident.agama,
+                'Pekerjaan': resident.pekerjaan,
+                'Status Perkawinan': resident.statusPerkawinan,
+                'Status Keluarga': resident.statusKeluarga,
+                'Alamat': resident.alamat,
+            };
+            
+            const container = document.getElementById('detail-fields');
+            container.innerHTML = Object.entries(detailFields).map(([key, value]) => `
+                <div class="py-2">
+                    <p class="text-sm text-gray-500">${key}</p>
+                    <p class="font-semibold text-gray-800">${value || '-'}</p>
+                </div>
+            `).join('<hr class="my-1">');
+
+            document.getElementById('edit-btn').onclick = () => editResident(id);
+            document.getElementById('delete-btn').onclick = () => deleteResident(id);
+
+            showPage('detail');
+        }
+        
+        function editResident(id) {
+            const resident = allResidents.find(p => p.id === id);
+            if (!resident) return;
+            
+            document.getElementById('form-title').textContent = 'Ubah Data Penduduk';
+            addForm.dataset.mode = 'edit';
+            addForm.dataset.docId = id;
+            
+            // Isi form dengan data yang ada
+            Object.keys(resident).forEach(key => {
+                const input = addForm.elements[key];
+                if (input) {
+                    input.value = resident[key];
+                }
+            });
+
+            showPage('add');
+        }
+
+        async function deleteResident(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+                try {
+                    const docPath = `artifacts/${appId}/public/data/residents/${id}`;
+                    await deleteDoc(doc(db, docPath));
+                    showToast('Data berhasil dihapus.');
+                    showPage('residents');
+                } catch (error) {
+                    console.error("Gagal menghapus data:", error);
+                    showToast('Gagal menghapus data.', true);
+                }
+            }
+        }
+
+        // --- INTERAKSI PENGGUNA ---
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = allResidents.filter(p => 
+                (p.nama && p.nama.toLowerCase().includes(searchTerm)) || 
+                (p.nik && p.nik.toLowerCase().includes(searchTerm))
+            );
+            renderResidentsList(filtered);
+        });
+
+        addForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Menyimpan...';
+
+            try {
+                if (addForm.dataset.mode === 'edit') {
+                    // Update data
+                    const docId = addForm.dataset.docId;
+                    const docPath = `artifacts/${appId}/public/data/residents/${docId}`;
+                    await updateDoc(doc(db, docPath), data);
+                    showToast('Data berhasil diperbarui.');
+                } else {
+                    // Tambah data baru
+                    const id = data.nik || `ID-${Date.now()}`;
+                    const docPath = `artifacts/${appId}/public/data/residents/${id}`;
+                    await setDoc(doc(db, docPath), { ...data, id });
+                    showToast('Data berhasil ditambahkan.');
+                }
+                e.target.reset();
+                showPage('residents');
+            } catch (error) {
+                console.error("Gagal menyimpan data:", error);
+                showToast(`Gagal menyimpan data: ${error.message}`, true);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Simpan Data';
+            }
+        });
+        
+        // --- FUNGSI SCAN GAMBAR (NETLIFY-READY) ---
+        async function handleImageScan(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            scanButton.disabled = true;
+            scanButton.innerHTML = `<svg class="animate-spin h-5 w-5 mr-3 -ml-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> Memindai...`;
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const base64ImageData = reader.result.split(',')[1];
+                
+                // Ini adalah bagian yang diubah untuk Netlify
+                try {
+                    // Kirim gambar ke 'petugas' kita di Netlify
+                    const response = await fetch('/.netlify/functions/scan-ktp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ imageData: base64ImageData })
+                    });
+
+                    if (!response.ok) {
+                        const errorBody = await response.json();
+                        throw new Error(errorBody.error || `Server Error: ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts.length > 0) {
+                        const extractedText = result.candidates[0].content.parts[0].text;
+                        const extractedData = JSON.parse(extractedText);
+                        
+                        Object.keys(extractedData).forEach(key => {
+                           const input = addForm.elements[key];
+                           if(input) input.value = extractedData[key];
+                        });
+                        showToast("Data berhasil diekstrak dari gambar!");
+
+                    } else {
+                        throw new Error("Tidak ada data yang bisa diekstrak dari gambar.");
+                    }
+                    
+                } catch (error) {
+                    console.error('Error saat scan:', error);
+                    showToast(`Gagal memindai: ${error.message}`, true);
+                } finally {
+                    scanButton.disabled = false;
+                    scanButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"/></svg> Scan Ulang KTP`;
+                    document.getElementById('image-input').value = '';
+                }
+            };
+        }
+
+        document.getElementById('image-input').addEventListener('change', handleImageScan);
+        scanButton.addEventListener('click', () => document.getElementById('image-input').click());
+
+
+        // --- INISIALISASI APLIKASI ---
+        function initializeDataListener(userId) {
+            if (unsubscribe) unsubscribe(); // Hentikan listener lama jika ada
+
+            const collectionPath = `artifacts/${appId}/public/data/residents`;
+            const q = collection(db, collectionPath);
+            
+            unsubscribe = onSnapshot(q, (querySnapshot) => {
+                allResidents = [];
+                querySnapshot.forEach((doc) => {
+                    allResidents.push({ id: doc.id, ...doc.data() });
+                });
+                console.log(`Data diterima: ${allResidents.length} penduduk.`);
+                
+                // Render semua halaman dengan data baru
+                renderDashboard();
+                renderResidentsList(allResidents);
+                renderRecap();
+
+                // Refresh halaman detail jika sedang ditampilkan
+                const detailPage = document.getElementById('page-detail');
+                if (!detailPage.classList.contains('hidden')) {
+                   const currentId = document.getElementById('edit-btn').onclick.toString().match(/'([^']+)'/)[1];
+                   if (allResidents.some(p => p.id === currentId)) {
+                       showResidentDetail(currentId);
+                   } else {
+                       showPage('residents'); // Kembali ke daftar jika data dihapus
+                   }
+                }
+
+            }, (error) => {
+                console.error("Gagal mendengarkan data:", error);
+                showToast("Koneksi ke database terputus.", true);
+            });
+        }
+        
+        onAuthStateChanged(auth, (user) => {
+            document.getElementById('loading-screen').classList.add('hidden');
+            if (user) {
+                console.log("Pengguna terautentikasi:", user.uid);
+                currentUserId = user.uid;
+                initializeDataListener(currentUserId);
+                showPage('dashboard');
+            } else {
+                console.log("Pengguna belum terautentikasi, mencoba sign in anonim.");
+                signInAnonymously(auth).catch((error) => {
+                    console.error("Gagal sign in anonim:", error);
+                    showToast("Tidak bisa terhubung ke server. Periksa koneksi Anda.", true);
+                });
+            }
+        });
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .nav-indicator {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div id="app-container" class="max-w-md mx-auto bg-gray-100 min-h-screen shadow-2xl flex flex-col">
+        <!-- Main Content -->
+        <main class="flex-1 pb-24 overflow-y-auto">
+            <!-- Loading Screen -->
+            <div id="loading-screen" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+                 <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg>
+            </div>
+
+            <!-- Page: Dashboard -->
+            <div id="page-dashboard" class="p-4 space-y-4">
+                <div class="bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-6 rounded-2xl shadow-lg">
+                    <p class="text-indigo-200">Total Penduduk</p>
+                    <p id="total-penduduk" class="text-4xl font-bold">0</p>
+                    <p class="text-indigo-200 mt-2">Total Kepala Keluarga: <span id="total-kk" class="font-semibold">0</span></p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm">
+                        <h3 class="font-semibold text-gray-700 mb-2">Jenis Kelamin</h3>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-sm"><span class="text-gray-500">Laki-laki</span> <strong id="stat-laki" class="text-gray-800">0</strong></div>
+                            <div class="flex justify-between text-sm"><span class="text-gray-500">Perempuan</span> <strong id="stat-perempuan" class="text-gray-800">0</strong></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm">
+                        <h3 class="font-semibold text-gray-700 mb-2">Kepala Keluarga</h3>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-sm"><span class="text-gray-500">Laki-laki</span> <strong id="stat-kk-laki" class="text-gray-800">0</strong></div>
+                            <div class="flex justify-between text-sm"><span class="text-gray-500">Perempuan</span> <strong id="stat-kk-perempuan" class="text-gray-800">0</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <h3 class="font-semibold text-gray-700 mb-2">Demografi Usia</h3>
+                    <div class="space-y-1 text-sm">
+                        <div class="flex justify-between"><span class="text-gray-500">Lansia (60+)</span> <strong id="stat-lansia">0</strong></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Dewasa (19-59)</span> <strong id="stat-dewasa">0</strong></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Remaja (13-18)</span> <strong id="stat-remaja">0</strong></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Anak-anak (6-12)</span> <strong id="stat-anak">0</strong></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Balita (0-5)</span> <strong id="stat-balita">0</strong></div>
+                    </div>
+                </div>
+
+                <div class="bg-yellow-100 text-yellow-800 p-4 rounded-xl shadow-sm flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold">Lansia Tunggal</h3>
+                        <p class="text-sm">Jumlah lansia yang tinggal sendiri.</p>
+                    </div>
+                    <p id="stat-lansia-tunggal" class="text-3xl font-bold">0</p>
+                </div>
+            </div>
+
+            <!-- Page: Residents List -->
+            <div id="page-residents" class="p-4 space-y-4 hidden">
+                 <div class="relative">
+                    <input type="text" id="search-input" placeholder="Cari nama atau NIK..." class="w-full pl-10 pr-4 py-3 rounded-xl border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                    </div>
+                 </div>
+                 <div id="residents-list" class="space-y-3">
+                    <!-- Data penduduk akan dirender di sini -->
+                 </div>
+            </div>
+            
+            <!-- Page: Recap -->
+            <div id="page-recap" class="p-4 space-y-4 hidden">
+                 <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <h3 class="font-semibold text-gray-700 mb-3">Rekapitulasi Agama</h3>
+                    <div id="recap-agama" class="space-y-2"></div>
+                 </div>
+                 <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <h3 class="font-semibold text-gray-700 mb-3">Rekapitulasi Pekerjaan</h3>
+                    <div id="recap-pekerjaan" class="space-y-2"></div>
+                 </div>
+            </div>
+
+            <!-- Page: Add/Edit Resident -->
+            <div id="page-add" class="p-4 hidden">
+                 <h2 id="form-title" class="text-2xl font-bold text-gray-800 mb-4">Tambah Data Baru</h2>
+                 <form id="add-resident-form" class="space-y-4">
+                     <input type="file" id="image-input" class="hidden" accept="image/*">
+                     <button type="button" id="scan-button" class="w-full flex justify-center items-center bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                           <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
+                        </svg>
+                        Scan KTP dengan AI
+                    </button>
+                    <div class="text-center text-gray-500 text-sm my-2">atau isi manual di bawah</div>
+                    
+                     <div>
+                         <label for="nik" class="block text-sm font-medium text-gray-700">NIK</label>
+                         <input type="number" name="nik" id="nik" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                     </div>
+                     <div>
+                         <label for="nama" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                         <input type="text" name="nama" id="nama" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                     </div>
+                     <div>
+                         <label for="tglLahir" class="block text-sm font-medium text-gray-700">Tanggal Lahir</label>
+                         <input type="date" name="tglLahir" id="tglLahir" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                     </div>
+                     <div>
+                         <label for="jenisKelamin" class="block text-sm font-medium text-gray-700">Jenis Kelamin</label>
+                         <select name="jenisKelamin" id="jenisKelamin" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                             <option value="Laki-laki">Laki-laki</option>
+                             <option value="Perempuan">Perempuan</option>
+                         </select>
+                     </div>
+                     <div>
+                         <label for="agama" class="block text-sm font-medium text-gray-700">Agama</label>
+                         <input type="text" name="agama" id="agama" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                     </div>
+                     <div>
+                         <label for="pekerjaan" class="block text-sm font-medium text-gray-700">Pekerjaan</label>
+                         <input type="text" name="pekerjaan" id="pekerjaan" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                     </div>
+                     <div>
+                         <label for="statusPerkawinan" class="block text-sm font-medium text-gray-700">Status Perkawinan</label>
+                         <select name="statusPerkawinan" id="statusPerkawinan" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option>Belum Kawin</option>
+                            <option>Kawin</option>
+                            <option>Cerai Hidup</option>
+                            <option>Cerai Mati</option>
+                         </select>
+                     </div>
+                     <div>
+                         <label for="statusKeluarga" class="block text-sm font-medium text-gray-700">Status dalam Keluarga</label>
+                         <select name="statusKeluarga" id="statusKeluarga" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <option>Kepala Keluarga</option>
+                            <option>Istri</option>
+                            <option>Anak</option>
+                            <option>Lainnya</option>
+                         </select>
+                     </div>
+                      <div>
+                         <label for="alamat" class="block text-sm font-medium text-gray-700">Alamat</label>
+                         <textarea name="alamat" id="alamat" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                     </div>
+                     <div class="pt-4">
+                         <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Simpan Data</button>
+                     </div>
+                 </form>
+            </div>
+            
+            <!-- Page: Detail -->
+            <div id="page-detail" class="hidden">
+                <div class="p-4 bg-white">
+                    <button onclick="showPage('residents')" class="mb-4 text-indigo-600 font-semibold">&lt; Kembali ke Daftar</button>
+                    <div class="text-center mb-4">
+                        <h2 id="detail-nama" class="text-2xl font-bold text-gray-800">Nama Penduduk</h2>
+                        <p id="detail-nik" class="text-gray-500">NIK: 1234567890</p>
+                    </div>
+                    <div id="detail-fields" class="space-y-2 text-sm bg-gray-50 p-4 rounded-lg">
+                       <!-- Detail fields rendered here -->
+                    </div>
+                    <div class="mt-6 grid grid-cols-2 gap-3">
+                       <button id="edit-btn" class="w-full flex justify-center py-2 px-4 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50">Ubah</button>
+                       <button id="delete-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">Hapus</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 flex justify-around">
+            <button id="nav-dashboard" onclick="navigateTo('dashboard')" class="flex-1 flex flex-col items-center justify-center p-3 text-indigo-600">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                <span class="text-xs font-medium">Dasbor</span>
+                <div class="nav-indicator h-1 w-1 bg-indigo-600 rounded-full mt-1"></div>
+            </button>
+            <button id="nav-residents" onclick="navigateTo('residents')" class="flex-1 flex flex-col items-center justify-center p-3 text-gray-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                <span class="text-xs font-medium">Penduduk</span>
+                <div class="nav-indicator h-1 w-1 bg-indigo-600 rounded-full mt-1 hidden"></div>
+            </button>
+            <button id="nav-add" onclick="navigateTo('add')" class="flex-1 flex flex-col items-center justify-center p-3 text-gray-500 transform -translate-y-4">
+                 <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
+                    <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                 </div>
+            </button>
+            <button id="nav-recap" onclick="navigateTo('recap')" class="flex-1 flex flex-col items-center justify-center p-3 text-gray-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>
+                <span class="text-xs font-medium">Rekap</span>
+                <div class="nav-indicator h-1 w-1 bg-indigo-600 rounded-full mt-1 hidden"></div>
+            </button>
+            <button onclick="alert('Halaman profil belum dibuat.')" class="flex-1 flex flex-col items-center justify-center p-3 text-gray-500">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                <span class="text-xs font-medium">Profil</span>
+                <div class="nav-indicator h-1 w-1 bg-indigo-600 rounded-full mt-1 hidden"></div>
+            </button>
+        </nav>
+        
+        <!-- Toast Notification -->
+        <div id="toast" class="hidden">
+            <p id="toast-message"></p>
+        </div>
+    </div>
+
+</body>
+</html>
