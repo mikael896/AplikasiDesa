@@ -225,7 +225,7 @@
         <div class="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
     </div>
     
-    <!-- Kotak Pesan Error (DETEKTIF) -->
+    <!-- Kotak Pesan Error -->
     <div id="error-container" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[100] p-4">
         <div class="bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full">
             <div class="flex items-center mb-4">
@@ -245,12 +245,12 @@
 
 
     <script type="module">
-        // GANTI VERSI KE 9.6.10 (Versi Stabil)
+        // Menggunakan versi 9.6.10 yang terbukti stabil
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, addDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
-        // --- FUNGSI DETEKTIF ---
+        // --- Fungsi Error ---
         function showError(message) {
             const errorContainer = document.getElementById('error-container');
             const errorMessage = document.getElementById('error-message');
@@ -258,37 +258,21 @@
                 errorMessage.textContent = message;
                 errorContainer.classList.remove('hidden');
             }
-            hideLoadingSpinner(); // Sembunyikan loading agar error terlihat
-            console.error(message); // Tetap log di console untuk cadangan
+            hideLoadingSpinner();
+            console.error(message);
         }
         
-        // --- KONFIGURASI FIREBASE ---
-        // Konfigurasi ini akan diisi secara otomatis jika variabel global ada
-        // Jika tidak, kode akan gagal dengan pesan error yang jelas.
-        // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyCmFplJjCa0Ry6JEUoqyzBGfxKTMp55z8s",
-  authDomain: "pendudukapp-8d297.firebaseapp.com",
-  projectId: "pendudukapp-8d297",
-  storageBucket: "pendudukapp-8d297.firebasestorage.app",
-  messagingSenderId: "521712480220",
-  appId: "1:521712480220:web:d7aa47c6117d483f926919"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-        if (!firebaseConfig.apiKey) {
-            showError("Konfigurasi Firebase tidak ditemukan atau tidak valid. Aplikasi tidak dapat berjalan.");
-            return; // Hentikan eksekusi jika tidak ada konfigurasi
-        }
-
-        // --- INISIALISASI FIREBASE ---
+        // --- KONFIGURASI FIREBASE (Gunakan yang dari console Anda) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCmFplJjCa0Ry6JEUoqyzBGfxKTMp55z8s",
+            authDomain: "pendudukapp-8d297.firebaseapp.com",
+            projectId: "pendudukapp-8d297",
+            storageBucket: "pendudukapp-8d297.appspot.com",
+            messagingSenderId: "521712480220",
+            appId: "1:521712480220:web:d7aa47c6117d483f926919"
+        };
+        
+        // --- INISIALISASI ---
         let app, db, auth;
         try {
             app = initializeApp(firebaseConfig);
@@ -296,18 +280,19 @@ const app = initializeApp(firebaseConfig);
             auth = getAuth(app);
         } catch (e) {
             showError("Gagal menginisialisasi Firebase: " + e.message);
-            return;
         }
 
         const dataPendudukCol = collection(db, "data_penduduk");
+        let allData = [];
+        let unsubscribe = null; // Variabel untuk menyimpan listener agar bisa dihentikan
 
-        // --- Fungsi UI ---
+        // --- Fungsi Utama ---
         const pages = document.querySelectorAll('.page');
         const navItems = document.querySelectorAll('.nav-item');
         const loadingSpinner = document.getElementById('loading-spinner');
         
-        function showLoadingSpinner() { if(loadingSpinner) loadingSpinner.classList.remove('hidden'); }
-        function hideLoadingSpinner() { if(loadingSpinner) loadingSpinner.classList.add('hidden'); }
+        function showLoadingSpinner() { if(loadingSpinner) loadingSpinner.style.display = 'flex'; }
+        function hideLoadingSpinner() { if(loadingSpinner) loadingSpinner.style.display = 'none'; }
 
         function navigateTo(pageId) {
             pages.forEach(page => page.classList.toggle('active', page.id === `page-${pageId}`));
@@ -317,10 +302,9 @@ const app = initializeApp(firebaseConfig);
             });
             window.scrollTo(0, 0);
         }
-        
-        // ... (Fungsi-fungsi lain seperti getAgeCategory, renderPendudukList, dll. tetap sama)
 
         function getAge(dateString) {
+            if (!dateString) return 0;
             const birthDate = new Date(dateString);
             const today = new Date();
             let age = today.getFullYear() - birthDate.getFullYear();
@@ -347,7 +331,7 @@ const app = initializeApp(firebaseConfig);
                     const age = getAge(p.tgl_lahir);
                     const initial = p.nama ? p.nama.charAt(0).toUpperCase() : '?';
                     return `
-                        <div class="flex items-center bg-white p-3 rounded-lg border cursor-pointer" data-id="${p.id}">
+                        <div class="flex items-center bg-white p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors" data-id="${p.id}">
                             <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold mr-4">${initial}</div>
                             <div class="flex-grow">
                                 <p class="font-semibold text-gray-800">${p.nama || 'Tanpa Nama'}</p>
@@ -365,85 +349,70 @@ const app = initializeApp(firebaseConfig);
         
         function updateDashboard(data) {
             document.getElementById('total-penduduk').textContent = data.length;
-
-            const noKkSet = new Set(data.map(p => p.no_kk));
+            const noKkSet = new Set(data.map(p => p.no_kk).filter(Boolean));
             document.getElementById('total-kk').textContent = noKkSet.size;
 
-            let laki = 0, perempuan = 0;
-            let kkLaki = new Set(), kkPerempuan = new Set();
-            let balita = 0, anak = 0, remaja = 0, dewasa = 0, lansia = 0;
-            let lansiaTunggal = 0;
-            const kkMap = new Map();
-
-            data.forEach(p => {
+            const counts = data.reduce((acc, p) => {
+                if (p.jenis_kelamin === 'Laki-laki') acc.laki++; else acc.perempuan++;
                 const age = getAge(p.tgl_lahir);
                 const category = getAgeCategory(age);
-                if (p.jenis_kelamin === 'Laki-laki') laki++; else perempuan++;
-                if (category === 'Balita') balita++;
-                else if (category === 'Anak-anak') anak++;
-                else if (category === 'Remaja') remaja++;
-                else if (category === 'Dewasa') dewasa++;
-                else if (category === 'Lansia') lansia++;
-                
+                acc[category.toLowerCase().replace('-', '')]++;
                 if (p.status_dalam_keluarga === 'Kepala Keluarga') {
-                   if (p.jenis_kelamin === 'Laki-laki') kkLaki.add(p.no_kk); else kkPerempuan.add(p.no_kk);
+                   if (p.jenis_kelamin === 'Laki-laki') acc.kkLaki.add(p.no_kk); else acc.kkPerempuan.add(p.no_kk);
                 }
+                return acc;
+            }, { laki: 0, perempuan: 0, balita: 0, anakanak: 0, remaja: 0, dewasa: 0, lansia: 0, kkLaki: new Set(), kkPerempuan: new Set() });
 
+            const kkMap = new Map();
+            data.forEach(p => {
                 if (!kkMap.has(p.no_kk)) kkMap.set(p.no_kk, []);
                 kkMap.get(p.no_kk).push(p);
             });
-
+            let lansiaTunggal = 0;
             kkMap.forEach((members) => {
                 if (members.length === 1 && getAgeCategory(getAge(members[0].tgl_lahir)) === 'Lansia') {
                     lansiaTunggal++;
                 }
             });
 
-            document.getElementById('jumlah-laki').textContent = laki;
-            document.getElementById('jumlah-perempuan').textContent = perempuan;
-            document.getElementById('jumlah-kk-laki').textContent = kkLaki.size;
-            document.getElementById('jumlah-kk-perempuan').textContent = kkPerempuan.size;
-            document.getElementById('jumlah-balita').textContent = balita;
-            document.getElementById('jumlah-anak').textContent = anak;
-            document.getElementById('jumlah-remaja').textContent = remaja;
-            document.getElementById('jumlah-dewasa').textContent = dewasa;
-            document.getElementById('jumlah-lansia').textContent = lansia;
+            document.getElementById('jumlah-laki').textContent = counts.laki;
+            document.getElementById('jumlah-perempuan').textContent = counts.perempuan;
+            document.getElementById('jumlah-kk-laki').textContent = counts.kkLaki.size;
+            document.getElementById('jumlah-kk-perempuan').textContent = counts.kkPerempuan.size;
+            document.getElementById('jumlah-balita').textContent = counts.balita;
+            document.getElementById('jumlah-anak').textContent = counts.anakanak;
+            document.getElementById('jumlah-remaja').textContent = counts.remaja;
+            document.getElementById('jumlah-dewasa').textContent = counts.dewasa;
+            document.getElementById('jumlah-lansia').textContent = counts.lansia;
             document.getElementById('jumlah-lansia-tunggal').textContent = lansiaTunggal;
         }
 
         function updateRekap(data) {
-            const rekapAgama = data.reduce((acc, p) => {
-                acc[p.agama] = (acc[p.agama] || 0) + 1;
-                return acc;
-            }, {});
+            const rekapAgama = data.reduce((acc, p) => { acc[p.agama] = (acc[p.agama] || 0) + 1; return acc; }, {});
             document.getElementById('rekap-agama').innerHTML = Object.entries(rekapAgama).map(([agama, jumlah]) => `
                 <li class="flex justify-between items-center"><span class="text-gray-600">${agama}</span><span class="font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded">${jumlah}</span></li>
-            `).join('');
+            `).join('') || '<p class="text-gray-500 text-center">Data kosong.</p>';
 
-            const rekapPekerjaan = data.reduce((acc, p) => {
-                acc[p.pekerjaan] = (acc[p.pekerjaan] || 0) + 1;
-                return acc;
-            }, {});
+            const rekapPekerjaan = data.reduce((acc, p) => { acc[p.pekerjaan] = (acc[p.pekerjaan] || 0) + 1; return acc; }, {});
             document.getElementById('rekap-pekerjaan').innerHTML = Object.entries(rekapPekerjaan).map(([pekerjaan, jumlah]) => `
                 <li class="flex justify-between items-center"><span class="text-gray-600">${pekerjaan}</span><span class="font-semibold bg-gray-200 text-gray-700 px-2 py-1 rounded">${jumlah}</span></li>
-            `).join('');
+            `).join('') || '<p class="text-gray-500 text-center">Data kosong.</p>';
         }
         
-        let allData = [];
-        
         function setupRealtimeListeners() {
+            if (unsubscribe) unsubscribe(); // Hentikan listener lama jika ada
             try {
-                 onSnapshot(dataPendudukCol, (snapshot) => {
+                 unsubscribe = onSnapshot(dataPendudukCol, (snapshot) => {
                     allData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     renderPendudukList(allData);
                     updateDashboard(allData);
                     updateRekap(allData);
-                    hideLoadingSpinner(); // Sembunyikan spinner SETELAH data dimuat
+                    hideLoadingSpinner(); // Sembunyikan spinner SETELAH data pertama kali dimuat
                 }, (error) => {
-                    showError("Gagal mengambil data real-time: " + error.message);
+                    showError("Gagal mengambil data: " + error.message);
                 });
             } catch (e) {
-                showError("Error saat menyiapkan listener: " + e.message);
+                showError("Error saat memasang listener data: " + e.message);
             }
         }
         
@@ -454,22 +423,22 @@ const app = initializeApp(firebaseConfig);
             const age = getAge(p.tgl_lahir);
             detailPage.innerHTML = `
                 <div class="bg-white p-4 rounded-lg border">
-                    <h2 class="text-xl font-bold text-gray-800 mb-2">${p.nama}</h2>
+                    <button id="back-detail-btn" class="text-indigo-600 font-semibold mb-4 flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>Kembali ke Daftar</button>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">${p.nama}</h2>
                     <p class="text-gray-600 mb-4">${p.nik}</p>
-                    <div class="space-y-2 text-sm">
-                        <p><strong class="w-24 inline-block">No. KK:</strong> ${p.no_kk}</p>
-                        <p><strong class="w-24 inline-block">Tgl Lahir:</strong> ${p.tgl_lahir} (${age} th)</p>
-                        <p><strong class="w-24 inline-block">Kelamin:</strong> ${p.jenis_kelamin}</p>
-                        <p><strong class="w-24 inline-block">Agama:</strong> ${p.agama}</p>
-                        <p><strong class="w-24 inline-block">Pekerjaan:</strong> ${p.pekerjaan}</p>
-                        <p><strong class="w-24 inline-block">Kawin:</strong> ${p.status_perkawinan}</p>
-                        <p><strong class="w-24 inline-block">Status KK:</strong> ${p.status_dalam_keluarga}</p>
+                    <div class="space-y-2 text-sm border-t pt-4">
+                        <p><strong class="w-24 inline-block text-gray-500">No. KK:</strong> ${p.no_kk || '-'}</p>
+                        <p><strong class="w-24 inline-block text-gray-500">Tgl Lahir:</strong> ${p.tgl_lahir || '-'} (${age} th)</p>
+                        <p><strong class="w-24 inline-block text-gray-500">Kelamin:</strong> ${p.jenis_kelamin || '-'}</p>
+                        <p><strong class="w-24 inline-block text-gray-500">Agama:</strong> ${p.agama || '-'}</p>
+                        <p><strong class="w-24 inline-block text-gray-500">Pekerjaan:</strong> ${p.pekerjaan || '-'}</p>
+                        <p><strong class="w-24 inline-block text-gray-500">Kawin:</strong> ${p.status_perkawinan || '-'}</p>
+                        <p><strong class="w-24 inline-block text-gray-500">Status KK:</strong> ${p.status_dalam_keluarga || '-'}</p>
                     </div>
-                    <div class="flex gap-4 mt-6">
+                    <div class="flex gap-4 mt-6 border-t pt-4">
                          <button id="edit-detail-btn" class="w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 hover:bg-gray-50">Ubah</button>
                          <button id="delete-detail-btn" class="w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700">Hapus</button>
                     </div>
-                     <button id="back-detail-btn" class="w-full mt-4 justify-center rounded-md border border-gray-300 bg-gray-100 px-4 py-2 font-medium text-gray-700 hover:bg-gray-200">Kembali</button>
                 </div>
             `;
             document.getElementById('edit-detail-btn').onclick = () => showForm(p);
@@ -481,21 +450,13 @@ const app = initializeApp(firebaseConfig);
         function showForm(dataToEdit = null) {
             const form = document.getElementById('data-form');
             form.reset();
+            document.getElementById('edit-id').value = dataToEdit ? dataToEdit.id : '';
+            document.getElementById('form-title').textContent = dataToEdit ? 'Ubah Data Penduduk' : 'Tambah Data Baru';
             if (dataToEdit) {
-                document.getElementById('form-title').textContent = 'Ubah Data Penduduk';
-                document.getElementById('edit-id').value = dataToEdit.id;
-                document.getElementById('nik').value = dataToEdit.nik;
-                document.getElementById('nama').value = dataToEdit.nama;
-                document.getElementById('no_kk').value = dataToEdit.no_kk;
-                document.getElementById('tgl_lahir').value = dataToEdit.tgl_lahir;
-                document.getElementById('jenis_kelamin').value = dataToEdit.jenis_kelamin;
-                document.getElementById('agama').value = dataToEdit.agama;
-                document.getElementById('pekerjaan').value = dataToEdit.pekerjaan;
-                document.getElementById('status_perkawinan').value = dataToEdit.status_perkawinan;
-                document.getElementById('status_dalam_keluarga').value = dataToEdit.status_dalam_keluarga;
-            } else {
-                document.getElementById('form-title').textContent = 'Tambah Data Baru';
-                document.getElementById('edit-id').value = '';
+                Object.keys(dataToEdit).forEach(key => {
+                    const el = document.getElementById(key);
+                    if (el) el.value = dataToEdit[key];
+                });
             }
             navigateTo('form');
         }
@@ -530,7 +491,6 @@ const app = initializeApp(firebaseConfig);
         }
         
         async function deleteData(id, name) {
-            // Menggunakan konfirmasi bawaan browser untuk kesederhanaan
             if (window.confirm(`Apakah Anda yakin ingin menghapus data ${name}?`)) {
                 showLoadingSpinner();
                 try {
@@ -546,8 +506,8 @@ const app = initializeApp(firebaseConfig);
         
         function filterData(query) {
             const filtered = allData.filter(p => 
-                p.nama.toLowerCase().includes(query) || 
-                p.nik.includes(query)
+                (p.nama || '').toLowerCase().includes(query) || 
+                (p.nik || '').includes(query)
             );
             renderPendudukList(filtered);
         }
@@ -559,7 +519,6 @@ const app = initializeApp(firebaseConfig);
             scanButton.disabled = true;
 
             try {
-                // Panggil Netlify Function
                 const response = await fetch('/.netlify/functions/scan-ktp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -572,9 +531,9 @@ const app = initializeApp(firebaseConfig);
                 }
                 
                 const result = await response.json();
-
-                if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
-                    const data = JSON.parse(result.candidates[0].content.parts[0].text);
+                const dataText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (dataText) {
+                    const data = JSON.parse(dataText);
                     document.getElementById('nik').value = data.nik || '';
                     document.getElementById('nama').value = data.nama || '';
                     document.getElementById('tgl_lahir').value = data.tglLahir || '';
@@ -584,7 +543,6 @@ const app = initializeApp(firebaseConfig);
                 } else {
                     throw new Error('Gagal mengekstrak data dari respons AI.');
                 }
-
             } catch (error) {
                 showError(`Gagal memindai: ${error.message}`);
             } finally {
@@ -593,8 +551,12 @@ const app = initializeApp(firebaseConfig);
             }
         }
 
-        // --- Event Listeners ---
+        // --- INI ADALAH BAGIAN UTAMA YANG DIPERBAIKI ---
         document.addEventListener('DOMContentLoaded', () => {
+            if (!auth) {
+                showError("Objek Firebase Auth tidak terinisialisasi.");
+                return;
+            }
             onAuthStateChanged(auth, async (user) => {
                 try {
                     if (user) {
@@ -612,20 +574,18 @@ const app = initializeApp(firebaseConfig);
                 }
             });
 
+            // --- Event Listeners Lainnya ---
             navItems.forEach(item => {
                 item.addEventListener('click', () => navigateTo(item.getAttribute('data-page')));
             });
-
             document.getElementById('add-button-nav').addEventListener('click', () => showForm());
             document.getElementById('cancel-button').addEventListener('click', () => navigateTo('penduduk'));
             document.getElementById('data-form').addEventListener('submit', saveData);
             document.getElementById('search-input').addEventListener('input', (e) => filterData(e.target.value.toLowerCase()));
-
             document.getElementById('scan-button').addEventListener('click', () => document.getElementById('image-input').click());
             document.getElementById('image-input').addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
-
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     const base64String = reader.result.replace('data:', '').replace(/^.+,/, '');
